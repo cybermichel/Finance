@@ -42,6 +42,8 @@ def main():
     text = open(md_pfad, encoding="utf-8").read()
     for alt, neu in ERSATZ.items():
         text = text.replace(alt, neu)
+    # "~" (ca.) nicht als Durchstreichung interpretieren lassen
+    text = re.sub(r"(?<!\\)~", r"\\~", text)
     # Links auf lokale Dateien (z. B. Excel) funktionieren im PDF nicht -> nur den Namen zeigen
     text = re.sub(r"\[([^\]]+)\]\((?!https?://)[^)]+\)", r"\1", text)
     titel = re.search(r"^#\s+(.+)$", text, re.M)
