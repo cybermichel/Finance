@@ -43,3 +43,13 @@ Zum Schluss:
 
 Speichere den Bericht als `Bericht.md` und die Bewertungsmodelle als Excel unter
 `/home/user/Finance/Analysen/<Name der Aktie>/`.
+
+**Zum Abschluss immer ein PDF bereitstellen:**
+1. Erzeuge aus dem fertigen Bericht ein gut lesbares A4-PDF mit
+   `python3 tools/bericht_pdf.py "Analysen/<Name der Aktie>/Bericht.md"`.
+   Es landet als `Bericht.pdf` im selben Ordner.
+2. Prüfe mindestens eine Seite als Bild (z. B. mit `pdftoppm -png`), ob Tabellen,
+   Listen und Sonderzeichen sauber dargestellt werden, und behebe Fehler.
+3. Schicke mir das PDF direkt in den Chat und nenne den Speicherort.
+4. Falls die PDF-Erstellung scheitert (z. B. fehlt pandoc oder ein Browser), sag mir
+   das ausdrücklich und nenne den Grund; liefere den Bericht dann als Markdown.

@@ -40,7 +40,7 @@ Mit diesem Befehl nennst du nur eine Aktie, und Claude nutzt die passenden Plugi
 
 - **Befehl:** `/aktie SAP` oder `/aktie AAPL`
 - **Was passiert:** Claude geht 9 Schritte durch: Geschäftsmodell, Branche, Wettbewerb, Finanzen der letzten 5 Jahre, letzte Quartalszahlen, Bewertungsvergleich, fairer Wert (DCF in drei Szenarien), anstehende Termine und Investment-These. Am Ende stehen eine Scorecard und ein ehrliches Fazit.
-- **Ergebnis:** Bericht und Excel-Modelle landen in `Finance/Analysen/<Aktie>/`.
+- **Ergebnis:** Bericht (als Markdown **und** gut lesbares PDF) und Excel-Modelle landen in `Finance/Analysen/<Aktie>/`. Das PDF bekommst du am Ende auch direkt in den Chat.
 - **Wann sinnvoll:** Bevor du eine Einzelaktie kaufst, oder einmal im Jahr für Aktien, die du schon besitzt.
 - **Die Befehlsdatei:** `Finance/.claude/commands/aktie.md`. Dort kannst du die Schritte jederzeit anpassen.
 - ⚠️ Eine vollständige Analyse dauert eine Weile und verbraucht viele Tokens.
