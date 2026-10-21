@@ -11,7 +11,7 @@ Kleine Web-App zum Erfassen der Arbeitszeit pro Monat – nach dem Vorbild der E
 - **Überstunden Vormonat:** wird automatisch aus dem Ergebnis des Vormonats übernommen. Für Oktober 2026 ist September mit 3:35 vorbelegt; das Feld kann jederzeit überschrieben werden.
 - **Genommene Überstunden:** werden vom Gesamtsaldo abgezogen.
 - Einträge per Klick bearbeiten, mit × löschen; Monate mit ‹ › wechseln.
-- CSV-Export (für Excel), Drucken/PDF, Backup sichern und laden.
+- CSV-Export (für Excel), PDF-Export (nur Einträge und Monatsübersicht), Backup sichern und laden.
 
 Zeiten in den Feldern als `h:mm` eingeben, z. B. `3:35` oder `-1:15` (auch `3,5` geht).
 

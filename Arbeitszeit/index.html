@@ -92,12 +92,14 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
 
 @media print{
   body{background:#fff;color:#000}
-  .month-nav button,form.entry,.tools,.del,footer,.link,.preview{display:none!important}
+  .month-nav button,form.entry,.card-h:first-child,.tools,.del,footer,.link,.preview{display:none!important}
   .card{box-shadow:none;border-color:#ccc}
   .grid{grid-template-columns:1fr}
   .row input{border:0;background:none}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -152,7 +154,7 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
       </section>
       <div class="tools">
         <button class="btn ghost" id="csvBtn">CSV exportieren</button>
-        <button class="btn ghost" id="printBtn">Drucken / PDF</button>
+        <button class="btn ghost" id="pdfBtn">PDF exportieren</button>
         <button class="btn ghost" id="backupBtn">Backup sichern</button>
         <button class="btn ghost" id="restoreBtn">Backup laden</button>
         <input type="file" id="restoreFile" accept="application/json" hidden>
@@ -360,7 +362,37 @@ $("csvBtn").onclick=()=>{
   const csv="﻿"+L.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\r\n");
   download(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${y}-${m}.csv`, csv, "text/csv");
 };
-$("printBtn").onclick=()=>window.print();
+$("pdfBtn").onclick=()=>{
+  if(!window.jspdf){ alert("PDF-Bibliothek konnte nicht geladen werden (Internet nötig)."); return; }
+  const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:"mm",format:"a4"});
+  const c=calc(cur); const [y,m]=cur.split("-").map(Number);
+  const f=v=>fmt(v).replace("−","-"), d=v=>dec(v);
+  const green=[63,125,78], red=[180,70,47];
+  doc.setFillColor(...green); doc.rect(0,0,210,24,"F");
+  doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(16);
+  doc.text(`Arbeitszeit / ${state.name||""} / ${MONTHS[m-1]} ${y}`,105,15,{align:"center"});
+  doc.autoTable({
+    startY:32, theme:"grid",
+    head:[["Datum","Kommen","Gehen","Pause","Arbeitszeit"]],
+    body:c.ents.map(e=>[new Date(e.date+"T12:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),e.start.replace(/^0/,""),e.end.replace(/^0/,""),e.pause?String(e.pause):"",f(worked(e))]),
+    headStyles:{fillColor:[255,255,255],textColor:20,fontStyle:"bold",halign:"right"},
+    styles:{fontSize:10,lineColor:[210,210,210],halign:"right"},
+    columnStyles:{0:{halign:"left"}},
+    didParseCell:h=>{ if(h.section==="head"&&h.column.index===0) h.cell.styles.halign="left"; },
+    alternateRowStyles:{fillColor:[240,243,246]}
+  });
+  const rows=[["Gearbeitete Stunden",c.w,true],["Sollstunden",c.soll,false],["Überstunden diesen Monat",c.over,true],["Überstunden kumuliert Vormonat",c.carry,false],["Genommene Überstunden",c.taken,false],["Überstunden kumuliert total",c.total,true]];
+  doc.autoTable({
+    startY:doc.lastAutoTable.finalY+10, theme:"plain", tableWidth:120, margin:{left:76},
+    body:rows.map(r=>[r[0],f(r[1])+"  h:mm",d(r[1])]),
+    styles:{fontSize:10,cellPadding:2},
+    columnStyles:{1:{halign:"right"},2:{halign:"right"}},
+    didParseCell:h=>{ const r=rows[h.row.index]; if(r[2]) h.cell.styles.fontStyle="bold"; if(h.column.index>0&&r[1]<0&&r[2]) h.cell.styles.textColor=red; if(h.row.index===5) h.cell.styles.lineWidth={top:.4}; }
+  });
+  doc.setFontSize(8); doc.setTextColor(140); doc.setFont("helvetica","normal");
+  doc.text("Erstellt am "+new Date().toLocaleDateString("de-DE"),14,287);
+  doc.save(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${cur}.pdf`);
+};
 $("backupBtn").onclick=()=>download(`Arbeitszeit_Backup_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state,null,2), "application/json");
 $("restoreBtn").onclick=()=>$("restoreFile").click();
 $("restoreFile").onchange=async ev=>{
