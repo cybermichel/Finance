@@ -84,11 +84,6 @@ td.total{font-weight:600}
 .row input{width:96px;text-align:right;padding:6px 8px;font-family:"JetBrains Mono",monospace}
 .progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:14px 0 6px}
 .progress i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
-.hero{margin:6px 20px 0;padding:18px;border-radius:12px;background:var(--accent-soft)}
-.hero.is-neg{background:var(--neg-soft)}
-.hero .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.hero .big{font-family:Fraunces,serif;font-size:42px;font-weight:650;line-height:1.1;margin-top:4px}
-.hero .dec{font-size:13px;color:var(--muted)}
 .link{background:none;border:0;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
 
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -144,11 +139,6 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
     <aside>
       <section class="card">
         <div class="card-h"><h2>Monatsübersicht</h2><span class="small" id="sumMonth"></span></div>
-        <div class="hero" id="hero">
-          <div class="lbl">Überstunden kumuliert total</div>
-          <div class="big num" id="hTotal"></div>
-          <div class="dec num" id="hTotalDec"></div>
-        </div>
         <div class="sum">
           <div class="progress"><i id="bar"></i></div>
           <div class="small" id="barLabel"></div>
@@ -157,6 +147,7 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
           <div class="row strong"><div class="k">Überstunden diesen Monat</div><div class="v num" id="sMonth"></div></div>
           <div class="row"><div class="k">Überstunden Vormonat<small id="carryHint"></small></div><div class="v"><input id="sCarry" aria-label="Überstunden Vormonat"></div></div>
           <div class="row"><div class="k">Genommene Überstunden<small>wird abgezogen</small></div><div class="v"><input id="sTaken" aria-label="Genommene Überstunden" placeholder="0:00"></div></div>
+          <div class="row strong total-row"><div class="k">Überstunden kumuliert total</div><div class="v num" id="sTotal"></div></div>
         </div>
       </section>
       <div class="tools">
@@ -290,10 +281,7 @@ function render(){
   const ac = $("autoCarry"); if(ac) ac.onclick = ()=>{ setM(cur,{carry:null}); render(); };
   if(document.activeElement!==$("sTaken")) $("sTaken").value = c.taken ? fmt(c.taken) : "";
 
-  $("hTotal").textContent = fmt(c.total,true);
-  $("hTotalDec").textContent = dec(c.total);
-  cls($("hTotal"),c.total);
-  $("hero").classList.toggle("is-neg", c.total<0);
+  $("sTotal").innerHTML = fmt(c.total,true)+`<span class="dec">${dec(c.total)}</span>`; cls($("sTotal"),c.total);
 
   const pct = c.soll>0 ? Math.min(100, c.w/c.soll*100) : 0;
   $("bar").style.width = pct+"%";
