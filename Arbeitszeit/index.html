@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbeitszeit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ea; --card:#fffdf8; --ink:#1f2a24; --muted:#6b7570; --line:#e4ded2;
+  --accent:#3f7d4e; --accent-soft:#e3efe5; --neg:#b4462f; --neg-soft:#f7e4de;
+  --field:#faf7f0; --shadow:0 1px 2px rgba(30,40,30,.05),0 8px 24px rgba(30,40,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141815; --card:#1c211d; --ink:#e8ece6; --muted:#97a19a; --line:#2c332e;
+    --accent:#7cc08b; --accent-soft:#223527; --neg:#ee8a72; --neg-soft:#3a231d;
+    --field:#171b18; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 60px}
+.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:Fraunces,serif;font-weight:650;font-size:34px;line-height:1.1;margin:4px 0 0}
+#nameInput{font:inherit;color:inherit;background:none;border:0;padding:0;width:100%;outline:none}
+#nameInput:focus{border-bottom:1px dashed var(--line)}
+.month-nav{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.month-nav button{border:0;background:none;color:var(--ink);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer}
+.month-nav button:hover{background:var(--accent-soft)}
+#monthLabel{font-family:Fraunces,serif;font-size:19px;font-weight:500;min-width:150px;text-align:center}
+
+.grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.card-h h2{margin:0;font-size:15px;font-weight:600}
+.small{font-size:13px;color:var(--muted)}
+
+form.entry{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr auto;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);align-items:end}
+@media (max-width:620px){form.entry{grid-template-columns:1fr 1fr}form.entry .f-date{grid-column:1/-1}form.entry .actions{grid-column:auto}form.entry .actions .btn{width:100%}}
+label{display:block;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:4px}
+input{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 10px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.actions{display:flex;gap:6px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;background:var(--accent);color:#fff;white-space:nowrap}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:none;color:var(--muted);border:1px solid var(--line)}
+.btn.ghost:hover{color:var(--ink)}
+.preview{grid-column:1/-1;font-size:13px;color:var(--muted);min-height:18px;margin-top:-2px}
+
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:right;padding:10px 12px;text-transform:uppercase;letter-spacing:.06em}
+th:first-child,td:first-child{text-align:left;padding-left:20px}
+td{padding:11px 12px;border-top:1px solid var(--line);text-align:right}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--accent-soft)}
+tr.editing td{background:var(--accent-soft)}
+.day{font-weight:500}
+td:first-child{white-space:nowrap}
+.wd{color:var(--muted);font-size:13px;margin-right:6px;display:inline-block;width:24px}
+.weekend .wd{color:var(--accent);font-weight:600}
+td.total{font-weight:600}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:6px}
+.del:hover{color:var(--neg);background:var(--neg-soft)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+@media (max-width:520px){.hide-sm{display:none}}
+
+.sum{padding:8px 20px 20px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
+.row:last-child{border-bottom:0}
+.row .k{font-size:14px}
+.row .k small{display:block;color:var(--muted);font-size:12px}
+.row .v{text-align:right;white-space:nowrap}
+.row .v .dec{display:block;font-size:12px;color:var(--muted)}
+.row.strong .k{font-weight:600}
+.neg{color:var(--neg)} .pos{color:var(--accent)}
+.row input{width:96px;text-align:right;padding:6px 8px;font-family:"JetBrains Mono",monospace}
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:14px 0 6px}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.hero{margin:6px 20px 0;padding:18px;border-radius:12px;background:var(--accent-soft)}
+.hero.is-neg{background:var(--neg-soft)}
+.hero .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero .big{font-family:Fraunces,serif;font-size:42px;font-weight:650;line-height:1.1;margin-top:4px}
+.hero .dec{font-size:13px;color:var(--muted)}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.tools .btn{font-size:13px;padding:8px 12px}
+footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
+
+@media print{
+  body{background:#fff;color:#000}
+  .month-nav button,form.entry,.tools,.del,footer,.link,.preview{display:none!important}
+  .card{box-shadow:none;border-color:#ccc}
+  .grid{grid-template-columns:1fr}
+  .row input{border:0;background:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Arbeitszeit</div>
+      <h1><input id="nameInput" aria-label="Name" spellcheck="false"></h1>
+    </div>
+    <div class="month-nav">
+      <button id="prevM" aria-label="Vorheriger Monat">‹</button>
+      <div id="monthLabel"></div>
+      <button id="nextM" aria-label="Nächster Monat">›</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-h"><h2 id="formTitle">Neuer Eintrag</h2><span class="small" id="countLabel"></span></div>
+      <form class="entry" id="entryForm" autocomplete="off">
+        <div class="f-date"><label for="fDate">Datum</label><input type="date" id="fDate" required></div>
+        <div><label for="fStart">Kommen</label><input type="time" id="fStart" required></div>
+        <div><label for="fEnd">Gehen</label><input type="time" id="fEnd" required></div>
+        <div><label for="fPause">Pause (min)</label><input type="number" id="fPause" min="0" step="5" placeholder="0" inputmode="numeric"></div>
+        <div class="actions">
+          <button class="btn" type="submit" id="saveBtn">Hinzufügen</button>
+          <button class="btn ghost" type="button" id="cancelBtn" hidden>Abbrechen</button>
+        </div>
+        <div class="preview" id="preview"></div>
+      </form>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Datum</th><th>Kommen</th><th>Gehen</th><th class="hide-sm">Pause</th><th>Arbeitszeit</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" hidden>Noch keine Einträge in diesem Monat.</div>
+    </section>
+
+    <aside>
+      <section class="card">
+        <div class="card-h"><h2>Monatsübersicht</h2><span class="small" id="sumMonth"></span></div>
+        <div class="hero" id="hero">
+          <div class="lbl">Überstunden kumuliert total</div>
+          <div class="big num" id="hTotal"></div>
+          <div class="dec num" id="hTotalDec"></div>
+        </div>
+        <div class="sum">
+          <div class="progress"><i id="bar"></i></div>
+          <div class="small" id="barLabel"></div>
+          <div class="row strong"><div class="k">Gearbeitete Stunden</div><div class="v num" id="sWorked"></div></div>
+          <div class="row"><div class="k">Sollstunden</div><div class="v"><input id="sSoll" aria-label="Sollstunden"></div></div>
+          <div class="row strong"><div class="k">Überstunden diesen Monat</div><div class="v num" id="sMonth"></div></div>
+          <div class="row"><div class="k">Überstunden Vormonat<small id="carryHint"></small></div><div class="v"><input id="sCarry" aria-label="Überstunden Vormonat"></div></div>
+          <div class="row"><div class="k">Genommene Überstunden<small>wird abgezogen</small></div><div class="v"><input id="sTaken" aria-label="Genommene Überstunden" placeholder="0:00"></div></div>
+        </div>
+      </section>
+      <div class="tools">
+        <button class="btn ghost" id="csvBtn">CSV exportieren</button>
+        <button class="btn ghost" id="printBtn">Drucken / PDF</button>
+        <button class="btn ghost" id="backupBtn">Backup sichern</button>
+        <button class="btn ghost" id="restoreBtn">Backup laden</button>
+        <input type="file" id="restoreFile" accept="application/json" hidden>
+      </div>
+    </aside>
+  </div>
+  <footer>Zeiten als h:mm eingeben (z.&nbsp;B. 3:35 oder -1:15). Daten werden nur in diesem Browser gespeichert – bitte ab und zu „Backup sichern“.</footer>
+</div>
+
+<script>
+const KEY = "arbeitszeit.v1";
+const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const WD = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+
+// ---------- State ----------
+function seed(){
+  return {
+    name: "Caroline Burzlaff",
+    sollMin: 36*60+50,
+    entries: [
+      {id:u(),date:"2026-10-03",start:"09:50",end:"14:35",pause:0},
+      {id:u(),date:"2026-10-05",start:"09:50",end:"18:30",pause:30},
+      {id:u(),date:"2026-10-10",start:"09:50",end:"14:30",pause:0},
+      {id:u(),date:"2026-10-12",start:"09:50",end:"18:45",pause:30},
+    ],
+    // per month: {carry: minutes|null (null = automatisch), taken: minutes, soll: minutes|null}
+    months: { "2026-10": {carry: 3*60+35, taken: 0, soll: null} }
+  };
+}
+function u(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
+  return seed();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+let state = load();
+
+const now = new Date();
+let cur = (() => { // show newest month with data, else current month
+  const mk = monthKey(now.getFullYear(), now.getMonth());
+  return mk;
+})();
+let editId = null;
+
+// ---------- Helpers ----------
+function monthKey(y,m){ return y+"-"+String(m+1).padStart(2,"0"); }
+function shiftMonth(mk,d){ let [y,m]=mk.split("-").map(Number); m=m-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; return monthKey(y,m); }
+function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
+function worked(e){ let d=toMin(e.end)-toMin(e.start); if(d<0) d+=1440; return Math.max(0,d-(Number(e.pause)||0)); }
+function fmt(min,signed){
+  const neg = min<0, a=Math.abs(Math.round(min));
+  const s = Math.floor(a/60)+":"+String(a%60).padStart(2,"0");
+  return neg ? "−"+s : (signed && a>0 ? "+"+s : s);
+}
+function dec(min){ return (min/60).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" h"; }
+function parseHM(str){
+  if(str==null) return null;
+  let s = String(str).trim().replace("−","-"); if(s==="") return null;
+  let neg = false; if(/^[-+]/.test(s)){ neg = s[0]==="-"; s=s.slice(1); }
+  let v;
+  if(s.includes(":")){ const [h,m]=s.split(":"); if(!/^\d*$/.test(h)||!/^\d{1,2}$/.test(m)) return NaN; v=(Number(h)||0)*60+Number(m); }
+  else { const n=Number(s.replace(",",".")); if(isNaN(n)) return NaN; v=Math.round(n*60); }
+  return neg?-v:v;
+}
+function mData(mk){ return state.months[mk] || {carry:null,taken:0,soll:null}; }
+function setM(mk,patch){ state.months[mk] = Object.assign({}, mData(mk), patch); save(); }
+function entriesOf(mk){ return state.entries.filter(e=>e.date.startsWith(mk)).sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)); }
+function hasData(mk){ return entriesOf(mk).length>0 || !!state.months[mk]; }
+function sollOf(mk){ const s=mData(mk).soll; return s==null ? state.sollMin : s; }
+
+// Totals, carry-over cascades automatically from previous month
+function calc(mk, depth=0){
+  const ents = entriesOf(mk);
+  const w = ents.reduce((s,e)=>s+worked(e),0);
+  const soll = sollOf(mk);
+  const md = mData(mk);
+  let carry, auto=false;
+  if(md.carry!=null){ carry = md.carry; }
+  else {
+    const prev = shiftMonth(mk,-1);
+    auto = true;
+    carry = (depth<240 && hasData(prev)) ? calc(prev, depth+1).total : 0;
+  }
+  const over = w - soll;
+  const total = over + carry - (md.taken||0);
+  return {ents, w, soll, over, carry, auto, taken: md.taken||0, total};
+}
+
+// ---------- Render ----------
+const $ = id => document.getElementById(id);
+function cls(el,v){ el.classList.toggle("neg", v<0); el.classList.toggle("pos", v>0); }
+
+function render(){
+  const [y,m] = cur.split("-").map(Number);
+  $("monthLabel").textContent = MONTHS[m-1]+" "+y;
+  $("sumMonth").textContent = MONTHS[m-1];
+  if(document.activeElement!==$("nameInput")) $("nameInput").value = state.name||"";
+  document.title = "Arbeitszeit – "+MONTHS[m-1]+" "+y;
+  const c = calc(cur);
+
+  const tb = $("rows"); tb.innerHTML = "";
+  c.ents.forEach(e=>{
+    const d = new Date(e.date+"T12:00:00"); const wd=d.getDay();
+    const tr = document.createElement("tr");
+    if(wd===0||wd===6) tr.classList.add("weekend");
+    if(e.id===editId) tr.classList.add("editing");
+    tr.innerHTML = `<td><span class="wd">${WD[wd]}</span><span class="day">${d.getDate()}. ${MONTHS[d.getMonth()]}</span></td>
+      <td class="num">${e.start.replace(/^0/,"")}</td><td class="num">${e.end.replace(/^0/,"")}</td>
+      <td class="num hide-sm">${e.pause?e.pause+" min":"–"}</td><td class="num total">${fmt(worked(e))}</td>
+      <td><button class="del" title="Löschen" aria-label="Löschen">×</button></td>`;
+    tr.addEventListener("click", ev=>{
+      if(ev.target.closest(".del")){ ev.stopPropagation(); if(confirm("Eintrag vom "+d.toLocaleDateString("de-DE")+" löschen?")){ state.entries=state.entries.filter(x=>x.id!==e.id); if(editId===e.id) resetForm(); save(); render(); } return; }
+      startEdit(e);
+    });
+    tb.appendChild(tr);
+  });
+  $("empty").hidden = c.ents.length>0;
+  $("countLabel").textContent = c.ents.length ? c.ents.length+(c.ents.length===1?" Tag":" Tage") : "";
+
+  $("sWorked").innerHTML = fmt(c.w)+`<span class="dec">${dec(c.w)}</span>`;
+  if(document.activeElement!==$("sSoll")) $("sSoll").value = fmt(c.soll);
+  $("sMonth").innerHTML = fmt(c.over,true)+`<span class="dec">${dec(c.over)}</span>`; cls($("sMonth"),c.over);
+  if(document.activeElement!==$("sCarry")) $("sCarry").value = fmt(c.carry);
+  const prevName = MONTHS[Number(shiftMonth(cur,-1).split("-")[1])-1];
+  $("carryHint").innerHTML = c.auto ? `automatisch aus ${prevName}` : `manuell · <button class="link" id="autoCarry">automatisch</button>`;
+  const ac = $("autoCarry"); if(ac) ac.onclick = ()=>{ setM(cur,{carry:null}); render(); };
+  if(document.activeElement!==$("sTaken")) $("sTaken").value = c.taken ? fmt(c.taken) : "";
+
+  $("hTotal").textContent = fmt(c.total,true);
+  $("hTotalDec").textContent = dec(c.total);
+  cls($("hTotal"),c.total);
+  $("hero").classList.toggle("is-neg", c.total<0);
+
+  const pct = c.soll>0 ? Math.min(100, c.w/c.soll*100) : 0;
+  $("bar").style.width = pct+"%";
+  $("barLabel").textContent = c.soll>0 ? `${Math.round(c.w/c.soll*100)} % der Sollstunden erreicht` + (c.w<c.soll?` · noch ${fmt(c.soll-c.w)} offen`:"") : "";
+  updatePreview();
+}
+
+// ---------- Form ----------
+function defaultDate(){
+  const t = new Date(); const tk = monthKey(t.getFullYear(),t.getMonth());
+  if(tk===cur) return `${tk}-${String(t.getDate()).padStart(2,"0")}`;
+  return cur+"-01";
+}
+function resetForm(){
+  editId=null; $("entryForm").reset();
+  $("fDate").value = defaultDate();
+  const last = state.entries[state.entries.length-1];
+  $("fStart").value = last ? last.start : "";
+  $("saveBtn").textContent="Hinzufügen"; $("cancelBtn").hidden=true; $("formTitle").textContent="Neuer Eintrag";
+}
+function startEdit(e){
+  editId=e.id; $("fDate").value=e.date; $("fStart").value=e.start; $("fEnd").value=e.end; $("fPause").value=e.pause||"";
+  $("saveBtn").textContent="Speichern"; $("cancelBtn").hidden=false; $("formTitle").textContent="Eintrag bearbeiten";
+  render(); $("fStart").focus();
+}
+function updatePreview(){
+  const s=$("fStart").value, e=$("fEnd").value;
+  if(s&&e){ const w = worked({start:s,end:e,pause:$("fPause").value}); $("preview").textContent = "Arbeitszeit: "+fmt(w)+" ("+dec(w)+")"+(toMin(e)<toMin(s)?" · über Mitternacht":""); }
+  else $("preview").textContent="";
+}
+["fStart","fEnd","fPause"].forEach(id=>$(id).addEventListener("input",updatePreview));
+$("entryForm").addEventListener("submit", ev=>{
+  ev.preventDefault();
+  const e = {date:$("fDate").value, start:$("fStart").value, end:$("fEnd").value, pause:Math.max(0,parseInt($("fPause").value)||0)};
+  if(!e.date||!e.start||!e.end) return;
+  if(editId){ Object.assign(state.entries.find(x=>x.id===editId), e); }
+  else state.entries.push(Object.assign({id:u()},e));
+  save();
+  cur = e.date.slice(0,7);
+  resetForm(); render(); $("fDate").focus();
+});
+$("cancelBtn").onclick = ()=>{ resetForm(); render(); };
+
+// ---------- Summary inputs ----------
+function bindHM(id, apply){
+  const el=$(id);
+  el.addEventListener("change", ()=>{
+    const v=parseHM(el.value);
+    if(Number.isNaN(v)){ alert("Bitte im Format h:mm eingeben, z. B. 3:35 oder -1:15"); render(); return; }
+    apply(v); render();
+  });
+  el.addEventListener("keydown", e=>{ if(e.key==="Enter") el.blur(); });
+  el.addEventListener("blur", ()=>setTimeout(render,0));
+}
+bindHM("sSoll", v=>{ if(v==null) setM(cur,{soll:null}); else { state.sollMin=v; setM(cur,{soll:v}); } });
+bindHM("sCarry", v=>setM(cur,{carry: v==null?null:v}));
+bindHM("sTaken", v=>setM(cur,{taken: v||0}));
+$("nameInput").addEventListener("input", ()=>{ state.name=$("nameInput").value; save(); });
+
+// ---------- Navigation ----------
+$("prevM").onclick=()=>{ cur=shiftMonth(cur,-1); resetForm(); render(); };
+$("nextM").onclick=()=>{ cur=shiftMonth(cur,1); resetForm(); render(); };
+
+// ---------- Export ----------
+function download(name, text, type){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$("csvBtn").onclick=()=>{
+  const c=calc(cur); const [y,m]=cur.split("-");
+  const L=[["Datum","Kommen","Gehen","Pause (Min)","Arbeitszeit h:mm","Arbeitszeit h"]];
+  c.ents.forEach(e=>L.push([new Date(e.date+"T12:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),e.start,e.end,e.pause||0,fmt(worked(e)),(worked(e)/60).toFixed(2).replace(".",",")]));
+  L.push([]);
+  [["Gearbeitete Stunden",c.w],["Sollstunden",c.soll],["Überstunden diesen Monat",c.over],["Überstunden Vormonat",c.carry],["Genommene Überstunden",c.taken],["Überstunden kumuliert total",c.total]]
+    .forEach(([k,v])=>L.push([k,"","","",fmt(v).replace("−","-"),(v/60).toFixed(2).replace(".",",")]));
+  const csv="﻿"+L.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  download(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${y}-${m}.csv`, csv, "text/csv");
+};
+$("printBtn").onclick=()=>window.print();
+$("backupBtn").onclick=()=>download(`Arbeitszeit_Backup_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state,null,2), "application/json");
+$("restoreBtn").onclick=()=>$("restoreFile").click();
+$("restoreFile").onchange=async ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  try{ const s=JSON.parse(await f.text()); if(!Array.isArray(s.entries)) throw 0; if(confirm("Aktuelle Daten durch das Backup ersetzen?")){ state=s; state.months=state.months||{}; save(); resetForm(); render(); } }
+  catch(e){ alert("Die Datei ist kein gültiges Backup."); }
+  ev.target.value="";
+};
+
+resetForm(); render();
+</script>
+</body>
+</html>
