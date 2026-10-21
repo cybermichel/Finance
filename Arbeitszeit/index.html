@@ -90,6 +90,20 @@ td.total{font-weight:600}
 .tools .btn{font-size:13px;padding:8px 12px}
 footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
 
+/* PDF-Ansicht: wie die App, aber ohne Eingabe */
+body.pdf-mode{background:#fff}
+body.pdf-mode .wrap{width:800px;max-width:none;padding:32px 32px 28px}
+body.pdf-mode .grid{grid-template-columns:1fr}
+body.pdf-mode #nameInput,body.pdf-mode .row .k small{display:none}
+body.pdf-mode #nameText{display:inline!important}
+body.pdf-mode .entries .card-h,body.pdf-mode form.entry,body.pdf-mode .tools,body.pdf-mode footer,
+body.pdf-mode .month-nav button,body.pdf-mode .del,body.pdf-mode .link,body.pdf-mode .empty{display:none!important}
+body.pdf-mode .month-nav{padding:6px 18px}
+body.pdf-mode .sum-card{width:440px;margin-left:auto}
+body.pdf-mode .row input{border-color:transparent;background:none;padding-right:0}
+body.pdf-mode tbody tr:hover td{background:none}
+body.pdf-mode *{box-shadow:none!important;transition:none!important}
+body.pdf-mode .card{box-shadow:0 1px 2px rgba(30,40,30,.06)!important}
 @media print{
   body{background:#fff;color:#000}
   .month-nav button,form.entry,.card-h:first-child,.tools,.del,footer,.link,.preview{display:none!important}
@@ -99,14 +113,14 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
       <div class="eyebrow">Arbeitszeit</div>
-      <h1><input id="nameInput" aria-label="Name" spellcheck="false"></h1>
+      <h1><input id="nameInput" aria-label="Name" spellcheck="false"><span id="nameText" hidden></span></h1>
     </div>
     <div class="month-nav">
       <button id="prevM" aria-label="Vorheriger Monat">‹</button>
@@ -116,7 +130,7 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
   </header>
 
   <div class="grid">
-    <section class="card">
+    <section class="card entries">
       <div class="card-h"><h2 id="formTitle">Neuer Eintrag</h2><span class="small" id="countLabel"></span></div>
       <form class="entry" id="entryForm" autocomplete="off">
         <div class="f-date"><label for="fDate">Datum</label><input type="date" id="fDate" required></div>
@@ -139,7 +153,7 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center}
     </section>
 
     <aside>
-      <section class="card">
+      <section class="card sum-card">
         <div class="card-h"><h2>Monatsübersicht</h2><span class="small" id="sumMonth"></span></div>
         <div class="sum">
           <div class="progress"><i id="bar"></i></div>
@@ -362,36 +376,27 @@ $("csvBtn").onclick=()=>{
   const csv="﻿"+L.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\r\n");
   download(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${y}-${m}.csv`, csv, "text/csv");
 };
-$("pdfBtn").onclick=()=>{
-  if(!window.jspdf){ alert("PDF-Bibliothek konnte nicht geladen werden (Internet nötig)."); return; }
-  const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:"mm",format:"a4"});
-  const c=calc(cur); const [y,m]=cur.split("-").map(Number);
-  const f=v=>fmt(v).replace("−","-"), d=v=>dec(v);
-  const green=[63,125,78], red=[180,70,47];
-  doc.setFillColor(...green); doc.rect(0,0,210,24,"F");
-  doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(16);
-  doc.text(`Arbeitszeit / ${state.name||""} / ${MONTHS[m-1]} ${y}`,105,15,{align:"center"});
-  doc.autoTable({
-    startY:32, theme:"grid",
-    head:[["Datum","Kommen","Gehen","Pause","Arbeitszeit"]],
-    body:c.ents.map(e=>[new Date(e.date+"T12:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),e.start.replace(/^0/,""),e.end.replace(/^0/,""),e.pause?String(e.pause):"",f(worked(e))]),
-    headStyles:{fillColor:[255,255,255],textColor:20,fontStyle:"bold",halign:"right"},
-    styles:{fontSize:10,lineColor:[210,210,210],halign:"right"},
-    columnStyles:{0:{halign:"left"}},
-    didParseCell:h=>{ if(h.section==="head"&&h.column.index===0) h.cell.styles.halign="left"; },
-    alternateRowStyles:{fillColor:[240,243,246]}
-  });
-  const rows=[["Gearbeitete Stunden",c.w,true],["Sollstunden",c.soll,false],["Überstunden diesen Monat",c.over,true],["Überstunden kumuliert Vormonat",c.carry,false],["Genommene Überstunden",c.taken,false],["Überstunden kumuliert total",c.total,true]];
-  doc.autoTable({
-    startY:doc.lastAutoTable.finalY+10, theme:"plain", tableWidth:120, margin:{left:76},
-    body:rows.map(r=>[r[0],f(r[1])+"  h:mm",d(r[1])]),
-    styles:{fontSize:10,cellPadding:2},
-    columnStyles:{1:{halign:"right"},2:{halign:"right"}},
-    didParseCell:h=>{ const r=rows[h.row.index]; if(r[2]) h.cell.styles.fontStyle="bold"; if(h.column.index>0&&r[1]<0&&r[2]) h.cell.styles.textColor=red; if(h.row.index===5) h.cell.styles.lineWidth={top:.4}; }
-  });
-  doc.setFontSize(8); doc.setTextColor(140); doc.setFont("helvetica","normal");
-  doc.text("Erstellt am "+new Date().toLocaleDateString("de-DE"),14,287);
-  doc.save(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${cur}.pdf`);
+$("pdfBtn").onclick=async()=>{
+  if(!window.jspdf||!window.html2canvas){ alert("PDF-Funktion konnte nicht geladen werden (Internet nötig)."); return; }
+  const btn=$("pdfBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="PDF wird erstellt …";
+  const root=document.documentElement, prevTheme=root.getAttribute("data-theme");
+  const keepEdit=editId; editId=null; render();
+  $("nameText").textContent=state.name||""; root.setAttribute("data-theme","light"); document.body.classList.add("pdf-mode");
+  try{
+    await document.fonts.ready;
+    const canvas=await html2canvas(document.querySelector(".wrap"),{scale:2,backgroundColor:"#ffffff",windowWidth:800});
+    const { jsPDF } = window.jspdf; const doc=new jsPDF({unit:"mm",format:"a4"});
+    const pw=210, ph=297, mg=8, w=pw-2*mg; let h=canvas.height*w/canvas.width;
+    const img=canvas.toDataURL("image/jpeg",0.92);
+    if(h<=ph-2*mg){ doc.addImage(img,"JPEG",mg,mg,w,h); }
+    else { const s=(ph-2*mg)/h; doc.addImage(img,"JPEG",(pw-w*s)/2,mg,w*s,h*s); }
+    doc.save(`Arbeitszeit_${(state.name||"").replace(/\s+/g,"_")}_${cur}.pdf`);
+  }catch(e){ alert("PDF konnte nicht erstellt werden."); }
+  finally{
+    document.body.classList.remove("pdf-mode");
+    if(prevTheme==null) root.removeAttribute("data-theme"); else root.setAttribute("data-theme",prevTheme);
+    editId=keepEdit; render(); btn.disabled=false; btn.textContent=old;
+  }
 };
 $("backupBtn").onclick=()=>download(`Arbeitszeit_Backup_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state,null,2), "application/json");
 $("restoreBtn").onclick=()=>$("restoreFile").click();
