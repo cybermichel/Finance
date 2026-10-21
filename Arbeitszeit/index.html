@@ -78,12 +78,11 @@ td.total{font-weight:600}
 .row .k{font-size:14px}
 .row .k small{display:block;color:var(--muted);font-size:12px}
 .row .v{text-align:right;white-space:nowrap}
+.u{font-size:12px;color:var(--muted);font-family:Inter,sans-serif;font-weight:500;margin-left:4px}
 .row .v .dec{display:block;font-size:12px;color:var(--muted)}
 .row.strong .k{font-weight:600}
 .neg{color:var(--neg)} .pos{color:var(--accent)}
-.row input{width:96px;text-align:right;padding:6px 8px;font-family:"JetBrains Mono",monospace}
-.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:14px 0 6px}
-.progress i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.row input{width:84px;text-align:right;padding:6px 8px;font-family:"JetBrains Mono",monospace}
 .link{background:none;border:0;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
 
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -155,14 +154,12 @@ body.pdf-mode .card{box-shadow:0 1px 2px rgba(30,40,30,.06)!important}
     <aside>
       <section class="card sum-card">
         <div class="card-h"><h2>Monatsübersicht</h2><span class="small" id="sumMonth"></span></div>
-        <div class="sum">
-          <div class="progress"><i id="bar"></i></div>
-          <div class="small" id="barLabel"></div>
+        <div class="sum" style="padding-top:4px">
           <div class="row strong"><div class="k">Gearbeitete Stunden</div><div class="v num" id="sWorked"></div></div>
-          <div class="row"><div class="k">Sollstunden</div><div class="v"><input id="sSoll" aria-label="Sollstunden"></div></div>
+          <div class="row"><div class="k">Sollstunden</div><div class="v"><input id="sSoll" aria-label="Sollstunden"><span class="u">h:mm</span><span class="dec num" id="sSollDec"></span></div></div>
           <div class="row strong"><div class="k">Überstunden diesen Monat</div><div class="v num" id="sMonth"></div></div>
-          <div class="row"><div class="k">Überstunden Vormonat<small id="carryHint"></small></div><div class="v"><input id="sCarry" aria-label="Überstunden Vormonat"></div></div>
-          <div class="row"><div class="k">Genommene Überstunden<small>wird abgezogen</small></div><div class="v"><input id="sTaken" aria-label="Genommene Überstunden" placeholder="0:00"></div></div>
+          <div class="row"><div class="k">Überstunden Vormonat<small id="carryHint"></small></div><div class="v"><input id="sCarry" aria-label="Überstunden Vormonat"><span class="u">h:mm</span><span class="dec num" id="sCarryDec"></span></div></div>
+          <div class="row"><div class="k">Genommene Überstunden<small>wird abgezogen</small></div><div class="v"><input id="sTaken" aria-label="Genommene Überstunden" placeholder="0:00"><span class="u">h:mm</span><span class="dec num" id="sTakenDec"></span></div></div>
           <div class="row strong total-row"><div class="k">Überstunden kumuliert total</div><div class="v num" id="sTotal"></div></div>
         </div>
       </section>
@@ -276,8 +273,8 @@ function render(){
     if(wd===0||wd===6) tr.classList.add("weekend");
     if(e.id===editId) tr.classList.add("editing");
     tr.innerHTML = `<td><span class="wd">${WD[wd]}</span><span class="day">${d.getDate()}. ${MONTHS[d.getMonth()]}</span></td>
-      <td class="num">${e.start.replace(/^0/,"")}</td><td class="num">${e.end.replace(/^0/,"")}</td>
-      <td class="num hide-sm">${e.pause?e.pause+" min":"–"}</td><td class="num total">${fmt(worked(e))}</td>
+      <td class="num">${e.start.replace(/^0/,"")}<span class="u">Uhr</span></td><td class="num">${e.end.replace(/^0/,"")}<span class="u">Uhr</span></td>
+      <td class="num hide-sm">${(e.pause||0)}<span class="u">min</span></td><td class="num total">${fmt(worked(e))}<span class="u">h:mm</span></td>
       <td><button class="del" title="Löschen" aria-label="Löschen">×</button></td>`;
     tr.addEventListener("click", ev=>{
       if(ev.target.closest(".del")){ ev.stopPropagation(); if(confirm("Eintrag vom "+d.toLocaleDateString("de-DE")+" löschen?")){ state.entries=state.entries.filter(x=>x.id!==e.id); if(editId===e.id) resetForm(); save(); render(); } return; }
@@ -288,20 +285,18 @@ function render(){
   $("empty").hidden = c.ents.length>0;
   $("countLabel").textContent = c.ents.length ? c.ents.length+(c.ents.length===1?" Tag":" Tage") : "";
 
-  $("sWorked").innerHTML = fmt(c.w)+`<span class="dec">${dec(c.w)}</span>`;
+  $("sWorked").innerHTML = fmt(c.w)+`<span class="u">h:mm</span><span class="dec">${dec(c.w)}</span>`;
   if(document.activeElement!==$("sSoll")) $("sSoll").value = fmt(c.soll);
-  $("sMonth").innerHTML = fmt(c.over,true)+`<span class="dec">${dec(c.over)}</span>`; cls($("sMonth"),c.over);
+  $("sMonth").innerHTML = fmt(c.over,true)+`<span class="u">h:mm</span><span class="dec">${dec(c.over)}</span>`; cls($("sMonth"),c.over);
   if(document.activeElement!==$("sCarry")) $("sCarry").value = fmt(c.carry);
   const prevName = MONTHS[Number(shiftMonth(cur,-1).split("-")[1])-1];
   $("carryHint").innerHTML = c.auto ? `automatisch aus ${prevName}` : `manuell · <button class="link" id="autoCarry">automatisch</button>`;
   const ac = $("autoCarry"); if(ac) ac.onclick = ()=>{ setM(cur,{carry:null}); render(); };
   if(document.activeElement!==$("sTaken")) $("sTaken").value = c.taken ? fmt(c.taken) : "";
 
-  $("sTotal").innerHTML = fmt(c.total,true)+`<span class="dec">${dec(c.total)}</span>`; cls($("sTotal"),c.total);
+  $("sSollDec").textContent=dec(c.soll); $("sCarryDec").textContent=dec(c.carry); $("sTakenDec").textContent=dec(c.taken);
+  $("sTotal").innerHTML = fmt(c.total,true)+`<span class="u">h:mm</span><span class="dec">${dec(c.total)}</span>`; cls($("sTotal"),c.total);
 
-  const pct = c.soll>0 ? Math.min(100, c.w/c.soll*100) : 0;
-  $("bar").style.width = pct+"%";
-  $("barLabel").textContent = c.soll>0 ? `${Math.round(c.w/c.soll*100)} % der Sollstunden erreicht` + (c.w<c.soll?` · noch ${fmt(c.soll-c.w)} offen`:"") : "";
   updatePreview();
 }
 
@@ -325,7 +320,7 @@ function startEdit(e){
 }
 function updatePreview(){
   const s=$("fStart").value, e=$("fEnd").value;
-  if(s&&e){ const w = worked({start:s,end:e,pause:$("fPause").value}); $("preview").textContent = "Arbeitszeit: "+fmt(w)+" ("+dec(w)+")"+(toMin(e)<toMin(s)?" · über Mitternacht":""); }
+  if(s&&e){ const w = worked({start:s,end:e,pause:$("fPause").value}); $("preview").textContent = "Arbeitszeit: "+fmt(w)+" h:mm ("+dec(w)+")"+(toMin(e)<toMin(s)?" · über Mitternacht":""); }
   else $("preview").textContent="";
 }
 ["fStart","fEnd","fPause"].forEach(id=>$(id).addEventListener("input",updatePreview));
